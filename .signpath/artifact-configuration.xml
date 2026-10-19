@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What SignPath signs inside the uploaded "unsigned" artifact (the framework-dependent publish folder, zipped by actions/upload-artifact). -->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <zip-file>
+    <pe-file path="G-Windows.exe"><authenticode-sign /></pe-file>
+    <pe-file path="G-Windows.dll"><authenticode-sign /></pe-file>
+    <pe-file path="GWindows.Core.dll"><authenticode-sign /></pe-file>
+  </zip-file>
+</artifact-configuration>

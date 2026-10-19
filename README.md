@@ -49,6 +49,10 @@ Requires the .NET 8 SDK on Windows. Layout of the repo:
 
 A source-level security audit was done; see `docs/security-audit/relatorio-auditoria-seguranca.pdf` (Portuguese). Import layout files only from sources you trust: items may point to any path, including network shares.
 
+## Code signing
+
+Release binaries are currently unsigned; see the [code signing policy](CODE_SIGNING_POLICY.md) for the SignPath Foundation application status.
+
 ## Disclaimer
 
 G-Windows is an independent open-source project and is not affiliated with, endorsed by or sponsored by Microsoft. "Windows" is a trademark of Microsoft Corporation.

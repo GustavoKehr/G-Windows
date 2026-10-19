@@ -1,0 +1,78 @@
+name: Release
+
+# Push a tag like v1.0.3 to build, (optionally) sign with SignPath, and publish a GitHub release.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Test
+        run: dotnet test -c Release
+
+      - name: Publish (framework-dependent and self-contained)
+        run: |
+          dotnet publish src/GWindows.App -c Release -r win-x64 --self-contained false -o dist/small
+          dotnet publish src/GWindows.App -c Release -r win-x64 --self-contained true  -o dist/full
+
+      - name: Upload unsigned binaries
+        id: upload-unsigned
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned
+          path: dist/small/*
+
+      # Runs only when the SignPath secret is configured; otherwise the release is published unsigned.
+      - name: Sign with SignPath
+        if: ${{ env.SIGNPATH_API_TOKEN != '' }}
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: g-windows
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: initial
+          github-artifact-id: ${{ steps.upload-unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed
+
+      - name: Use signed files
+        if: ${{ env.SIGNPATH_API_TOKEN != '' }}
+        shell: pwsh
+        run: |
+          # SignPath returns a zip; its files replace ours in both packages (the self-contained one only needs our 3 assemblies swapped).
+          Expand-Archive (Get-ChildItem signed -Filter *.zip | Select-Object -First 1).FullName -DestinationPath signed-files -Force
+          foreach ($f in 'G-Windows.exe','G-Windows.dll','GWindows.Core.dll') {
+            Copy-Item "signed-files/$f" dist/small/ -Force
+            Copy-Item "signed-files/$f" dist/full/  -Force
+          }
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $v = '${{ github.ref_name }}'.TrimStart('v')
+          foreach ($d in 'small','full') { Copy-Item README.md,LICENSE "dist/$d" }
+          Compress-Archive -Path dist/small/* -DestinationPath "G-Windows-v$v-win-x64.zip"
+          Compress-Archive -Path dist/full/*  -DestinationPath "G-Windows-v$v-win-x64-self-contained.zip"
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          gh release create '${{ github.ref_name }}' G-Windows-*.zip --title "G-Windows ${{ github.ref_name }}" --generate-notes
