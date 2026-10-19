@@ -9,7 +9,7 @@
     <ApplicationIcon>gwindows.ico</ApplicationIcon>
     <AssemblyName>G-Windows</AssemblyName>
     <RootNamespace>GWindows</RootNamespace>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Product>G-Windows</Product>
     <Description>Desktop organizer for Windows: translucent, grid-aligned fences for your shortcuts, folders and files.</Description>
   </PropertyGroup>

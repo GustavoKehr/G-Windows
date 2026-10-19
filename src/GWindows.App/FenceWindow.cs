@@ -427,7 +427,7 @@ public sealed class FenceWindow : Window
             {
                 dynamic sh = Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell")!)!;
                 string args = sh.CreateShortcut(path).Arguments;
-                if (args.StartsWith("shell:AppsFolder", StringComparison.OrdinalIgnoreCase) && Native.ItemImage(args) is { } img) return img;
+                if (args.StartsWith("shell:", StringComparison.OrdinalIgnoreCase) && Native.ItemImage(args) is { } img) return img;   // Store apps (shell:AppsFolder\...) and shell folders (shell:RecycleBinFolder)
             }
             using var ic = System.Drawing.Icon.ExtractAssociatedIcon(path);
             return ic is null ? null : Imaging.CreateBitmapSourceFromHIcon(ic.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
