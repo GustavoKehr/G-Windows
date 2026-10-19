@@ -30,6 +30,7 @@ static class L
         ["Nome do perfil"] = "Profile name",
         ["O G-Windows já está em execução. Procure o ícone na bandeja do Windows."] = "G-Windows is already running. Look for its icon in the Windows tray.",
         ["Este layout contém {0} caminho(s) de rede (\\\\servidor\\...). Ao carregar, o Windows se conecta a esses servidores. Continuar?"] = "This layout contains {0} network path(s) (\\\\server\\...). When it loads, Windows connects to those servers. Continue?",
+        ["Não foi possível ler o seu layout (o arquivo está intacto). O G-Windows abriu com o padrão e não vai salvar nesta sessão. Feche e abra o app novamente."] = "Could not read your layout (the file is untouched). G-Windows started with defaults and will not save in this session. Close and reopen the app.",
         // palette
         ["Enter confirmar   ·   Esc cancelar"] = "Enter confirm   ·   Esc cancel",
         ["Comando"] = "Command",

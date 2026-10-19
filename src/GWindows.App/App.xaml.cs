@@ -20,7 +20,7 @@ public partial class App : Application
         set
         {
             using var k = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(RunKey, true)!;
-            if (value) k.SetValue("G-Windows", $"\"{Environment.ProcessPath}\""); else k.DeleteValue("G-Windows", false);
+            if (value) k.SetValue("G-Windows", $"\"{Environment.ProcessPath}\" --startup"); else k.DeleteValue("G-Windows", false);
         }
     }
 
@@ -88,9 +88,14 @@ public partial class App : Application
         typeof(SystemParameters).GetField("_menuDropAlignment", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)?.SetValue(null, false);
         _single = new Mutex(true, "GWindows.SingleInstance", out var first);
         if (!first) { MessageBox.Show(L.T("O G-Windows já está em execução. Procure o ícone na bandeja do Windows."), "G-Windows", MessageBoxButton.OK, MessageBoxImage.Information); Shutdown(); return; }
-        Layout = LayoutStore.Load(LayoutPath);
-        if (LayoutStore.LastLoadFailed)   // keep the unreadable file instead of letting the first save replace it with defaults
-            try { File.Copy(LayoutPath, LayoutPath + ".unreadable-" + DateTime.Now.ToString("yyyyMMdd-HHmmss"), true); } catch (IOException) { }
+        if (e.Args.Contains("--startup")) System.Threading.Thread.Sleep(4000);   // at logon, let the shell and disk settle first
+        Layout = LayoutStore.Load(LayoutPath, 30, 500);   // waits up to ~15 s for a locked file
+        if (LayoutStore.LastLoadFailed)
+        {
+            // Never overwrite a layout we could not read: run with defaults, but do not save in this session.
+            _noSave = true;
+            MessageBox.Show(L.T("Não foi possível ler o seu layout (o arquivo está intacto). O G-Windows abriu com o padrão e não vai salvar nesta sessão. Feche e abra o app novamente."), "G-Windows", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
         if (Layout.Language.Length > 0) L.Current = Layout.Language;
         if (Layout.Fences.Count == 0) Layout.Fences.Add(new FenceData { Name = "Desktop", Items = DesktopItems().Take(24).ToList() });
         foreach (var f in Layout.Fences) Fit(f);
@@ -334,7 +339,9 @@ public partial class App : Application
         _debounce.Stop(); _debounce.Start();
     }
 
-    static void SaveNow() => LayoutStore.Save(LayoutPath, Layout);
+    static bool _noSave;
+
+    static void SaveNow() { if (!_noSave) LayoutStore.Save(LayoutPath, Layout); }
 
     /// <summary>Most used folders, ranked by how many Recent entries (folder shortcuts or files inside) point at them. Windows keeps no true access counter.</summary>
     public static List<string>? FoldersCache;

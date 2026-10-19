@@ -98,4 +98,19 @@ public class CoreTests
         File.WriteAllText(p, "{\"Fences\":null}"); Assert.NotNull(LayoutStore.Load(p).Fences);
         File.WriteAllText(p, "not json"); Assert.Empty(LayoutStore.Load(p).Fences);
     }
+
+    [Fact]
+    public void Load_waits_for_a_locked_file_and_flags_total_failure()
+    {
+        var p = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json");
+        File.WriteAllText(p, "{\"Fences\":[{\"Name\":\"A\"}]}");
+        var fs = new FileStream(p, FileMode.Open, FileAccess.Read, FileShare.None);   // exclusive lock, like an antivirus scan at logon
+        var t = Task.Run(() => { Thread.Sleep(600); fs.Dispose(); });
+        var l = LayoutStore.Load(p, 20, 100);
+        t.Wait();
+        Assert.Equal("A", l.Fences[0].Name); Assert.False(LayoutStore.LastLoadFailed);
+
+        using var fs2 = new FileStream(p, FileMode.Open, FileAccess.Read, FileShare.None);
+        Assert.Empty(LayoutStore.Load(p, 2, 50).Fences); Assert.True(LayoutStore.LastLoadFailed);   // still locked: reported, not silently replaced
+    }
 }

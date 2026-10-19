@@ -48,12 +48,15 @@ public static class LayoutStore
     public static bool LastLoadFailed { get; private set; }
 
     /// <summary>Reads layout.json (then .bak, then defaults). Any read/parse failure falls through to the next source, and the result is always normalized.</summary>
-    public static LayoutFile Load(string path)
+    public static LayoutFile Load(string path) => Load(path, 3, 150);
+
+    /// <summary>Right after logon the file can be locked for a while (antivirus, sync clients, disk not settled): callers at startup wait longer.</summary>
+    public static LayoutFile Load(string path, int attempts, int delayMs)
     {
         LastLoadFailed = false;
         foreach (var p in new[] { path, path + ".bak" })
         {
-            for (var attempt = 0; attempt < 3; attempt++)   // a locked file (antivirus, a crashing process) is often released within moments
+            for (var attempt = 0; attempt < attempts; attempt++)   // a locked file (antivirus, a crashing process) is often released within moments
             {
                 try
                 {
@@ -61,7 +64,8 @@ public static class LayoutStore
                     if (JsonSerializer.Deserialize<LayoutFile>(File.ReadAllText(p)) is { } l) return Normalize(l);
                     break;
                 }
-                catch (IOException) { Thread.Sleep(150); }
+                catch (IOException) { Thread.Sleep(delayMs); }
+                catch (UnauthorizedAccessException) { Thread.Sleep(delayMs); }
                 catch (Exception) { break; }   // corrupt JSON / hostile content: try the next source
             }
         }
