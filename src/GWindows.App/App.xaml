@@ -1,0 +1,146 @@
+<Application x:Class="GWindows.App" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" ShutdownMode="OnExplicitShutdown">
+  <Application.Resources>
+    <!-- Minimal fence scrollbar: a 3 px pill that fades in while the pointer is over the fence's list, grows and brightens on hover/drag (fast token: 140 ms ease-out). -->
+    <Style x:Key="FenceScrollBar" TargetType="ScrollBar">
+      <Setter Property="Width" Value="10" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ScrollBar">
+            <Grid x:Name="root" Background="Transparent" Opacity="0">
+              <Track x:Name="PART_Track" IsDirectionReversed="True">
+                <Track.DecreaseRepeatButton>
+                  <RepeatButton Command="ScrollBar.PageUpCommand" Focusable="False" IsTabStop="False">
+                    <RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Border Background="Transparent" /></ControlTemplate></RepeatButton.Template>
+                  </RepeatButton>
+                </Track.DecreaseRepeatButton>
+                <Track.IncreaseRepeatButton>
+                  <RepeatButton Command="ScrollBar.PageDownCommand" Focusable="False" IsTabStop="False">
+                    <RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Border Background="Transparent" /></ControlTemplate></RepeatButton.Template>
+                  </RepeatButton>
+                </Track.IncreaseRepeatButton>
+                <Track.Thumb>
+                  <Thumb>
+                    <Thumb.Template>
+                      <ControlTemplate TargetType="Thumb">
+                        <Border Background="Transparent">
+                          <Border x:Name="pill" Width="3" Margin="0,2,3,2" HorizontalAlignment="Right" CornerRadius="3" Background="White" Opacity="0.28" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                          <Trigger Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions>
+                              <BeginStoryboard>
+                                <Storyboard>
+                                  <DoubleAnimation Storyboard.TargetName="pill" Storyboard.TargetProperty="Width" To="6" Duration="0:0:0.14"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction></DoubleAnimation>
+                                  <DoubleAnimation Storyboard.TargetName="pill" Storyboard.TargetProperty="Opacity" To="0.6" Duration="0:0:0.14" />
+                                </Storyboard>
+                              </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                              <BeginStoryboard>
+                                <Storyboard>
+                                  <DoubleAnimation Storyboard.TargetName="pill" Storyboard.TargetProperty="Width" To="3" Duration="0:0:0.22"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction></DoubleAnimation>
+                                  <DoubleAnimation Storyboard.TargetName="pill" Storyboard.TargetProperty="Opacity" To="0.28" Duration="0:0:0.22" />
+                                </Storyboard>
+                              </BeginStoryboard>
+                            </Trigger.ExitActions>
+                          </Trigger>
+                          <Trigger Property="IsDragging" Value="True">
+                            <Setter TargetName="pill" Property="Opacity" Value="0.85" />
+                            <Setter TargetName="pill" Property="Width" Value="6" />
+                          </Trigger>
+                        </ControlTemplate.Triggers>
+                      </ControlTemplate>
+                    </Thumb.Template>
+                  </Thumb>
+                </Track.Thumb>
+              </Track>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ScrollViewer}}" Value="True">
+                <DataTrigger.EnterActions>
+                  <BeginStoryboard>
+                    <Storyboard><DoubleAnimation Storyboard.TargetName="root" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.14" /></Storyboard>
+                  </BeginStoryboard>
+                </DataTrigger.EnterActions>
+                <DataTrigger.ExitActions>
+                  <BeginStoryboard>
+                    <Storyboard><DoubleAnimation Storyboard.TargetName="root" Storyboard.TargetProperty="Opacity" To="0" BeginTime="0:0:0.8" Duration="0:0:0.32" /></Storyboard>
+                  </BeginStoryboard>
+                </DataTrigger.ExitActions>
+              </DataTrigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Right-click menu and tooltips in the fence look: dark translucent surface, 10 px corners, 1 px hairline, 4 px fade-slide on open (fast token). -->
+    <Style TargetType="ContextMenu">
+      <Setter Property="HasDropShadow" Value="True" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="FontFamily" Value="Segoe UI Variable" />
+      <Setter Property="FontSize" Value="12.5" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ContextMenu">
+            <Border x:Name="surface" Margin="8" Padding="4" CornerRadius="10" Background="#F2181A20" BorderBrush="#33FFFFFF" BorderThickness="1" Opacity="0" RenderTransformOrigin="0.5,0">
+              <Border.RenderTransform><TranslateTransform x:Name="slide" Y="-4" /></Border.RenderTransform>
+              <Border.Effect><DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.45" Color="Black" /></Border.Effect>
+              <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <EventTrigger RoutedEvent="Loaded">
+                <BeginStoryboard>
+                  <Storyboard>
+                    <DoubleAnimation Storyboard.TargetName="surface" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.14" />
+                    <DoubleAnimation Storyboard.TargetName="slide" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.14"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction></DoubleAnimation>
+                  </Storyboard>
+                </BeginStoryboard>
+              </EventTrigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style TargetType="MenuItem">
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="MenuItem">
+            <Border x:Name="bg" Padding="12,7" CornerRadius="6" Background="Transparent" SnapsToDevicePixels="True">
+              <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsHighlighted" Value="True">
+                <Trigger.EnterActions>
+                  <BeginStoryboard><Storyboard><ColorAnimation Storyboard.TargetName="bg" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#2EFFFFFF" Duration="0:0:0.1" /></Storyboard></BeginStoryboard>
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                  <BeginStoryboard><Storyboard><ColorAnimation Storyboard.TargetName="bg" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#00FFFFFF" Duration="0:0:0.16" /></Storyboard></BeginStoryboard>
+                </Trigger.ExitActions>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style TargetType="ToolTip">
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="FontFamily" Value="Segoe UI Variable" />
+      <Setter Property="FontSize" Value="11.5" />
+      <Setter Property="HasDropShadow" Value="True" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ToolTip">
+            <Border Margin="6" Padding="10,6" CornerRadius="8" Background="#F2181A20" BorderBrush="#33FFFFFF" BorderThickness="1">
+              <Border.Effect><DropShadowEffect BlurRadius="10" ShadowDepth="1" Opacity="0.4" Color="Black" /></Border.Effect>
+              <ContentPresenter />
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>  </Application.Resources>
+</Application>

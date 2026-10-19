@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF><UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>gwindows.ico</ApplicationIcon>
+    <AssemblyName>G-Windows</AssemblyName>
+    <RootNamespace>GWindows</RootNamespace>
+    <Version>1.0.0</Version>
+    <Product>G-Windows</Product>
+    <Description>Desktop organizer for Windows: translucent, grid-aligned fences for your shortcuts, folders and files.</Description>
+  </PropertyGroup>
+  <ItemGroup><Using Remove="System.Windows.Forms" /><Using Remove="System.Drawing" /></ItemGroup>
+  <ItemGroup><PackageReference Include="System.Drawing.Common" Version="8.0.10" /></ItemGroup>
+  <ItemGroup><ProjectReference Include="..\GWindows.Core\GWindows.Core.csproj" /></ItemGroup>
+</Project>
+
+

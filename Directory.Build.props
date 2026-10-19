@@ -1,0 +1,8 @@
+<Project>
+  <!-- Release builds: no PDBs and no local paths baked into the binaries. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>none</DebugType>
+    <PathMap>$(MSBuildThisFileDirectory)=/src/</PathMap>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+</Project>

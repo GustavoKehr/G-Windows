@@ -1,0 +1,10 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+dist/
+docs/security-audit/.venv/
+docs/security-audit/build/
+__pycache__/
+*.pyc
