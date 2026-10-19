@@ -44,18 +44,28 @@ public static class LayoutStore
 
     const long MaxBytes = 20 * 1024 * 1024;
 
+    /// <summary>True when layout.json exists but neither it nor the .bak could be used (the caller must not overwrite it blindly).</summary>
+    public static bool LastLoadFailed { get; private set; }
+
     /// <summary>Reads layout.json (then .bak, then defaults). Any read/parse failure falls through to the next source, and the result is always normalized.</summary>
     public static LayoutFile Load(string path)
     {
+        LastLoadFailed = false;
         foreach (var p in new[] { path, path + ".bak" })
         {
-            try
+            for (var attempt = 0; attempt < 3; attempt++)   // a locked file (antivirus, a crashing process) is often released within moments
             {
-                if (!File.Exists(p) || new FileInfo(p).Length > MaxBytes) continue;
-                if (JsonSerializer.Deserialize<LayoutFile>(File.ReadAllText(p)) is { } l) return Normalize(l);
+                try
+                {
+                    if (!File.Exists(p) || new FileInfo(p).Length > MaxBytes) break;
+                    if (JsonSerializer.Deserialize<LayoutFile>(File.ReadAllText(p)) is { } l) return Normalize(l);
+                    break;
+                }
+                catch (IOException) { Thread.Sleep(150); }
+                catch (Exception) { break; }   // corrupt JSON / hostile content: try the next source
             }
-            catch (Exception) { }   // corrupt JSON, unreadable file, hostile content: try the next source
         }
+        LastLoadFailed = File.Exists(path);
         return new();
     }
 

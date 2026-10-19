@@ -130,7 +130,9 @@ static class Palette
         };
         bool active = false;
         w.Activated += (_, _) => active = true;
-        w.Deactivated += (_, _) => { if (active) w.Close(); };
+        bool closing = false;
+        w.Closing += (_, _) => closing = true;   // Close() raises Deactivated; closing again from there throws and kills the process
+        w.Deactivated += (_, _) => { if (active && !closing) w.Dispatcher.BeginInvoke(() => { if (!closing) w.Close(); }); };
         w.Closed += (_, _) => _w = null;
         w.Loaded += (_, _) =>
         {

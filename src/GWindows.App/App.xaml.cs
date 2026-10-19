@@ -89,6 +89,8 @@ public partial class App : Application
         _single = new Mutex(true, "GWindows.SingleInstance", out var first);
         if (!first) { MessageBox.Show(L.T("O G-Windows já está em execução. Procure o ícone na bandeja do Windows."), "G-Windows", MessageBoxButton.OK, MessageBoxImage.Information); Shutdown(); return; }
         Layout = LayoutStore.Load(LayoutPath);
+        if (LayoutStore.LastLoadFailed)   // keep the unreadable file instead of letting the first save replace it with defaults
+            try { File.Copy(LayoutPath, LayoutPath + ".unreadable-" + DateTime.Now.ToString("yyyyMMdd-HHmmss"), true); } catch (IOException) { }
         if (Layout.Language.Length > 0) L.Current = Layout.Language;
         if (Layout.Fences.Count == 0) Layout.Fences.Add(new FenceData { Name = "Desktop", Items = DesktopItems().Take(24).ToList() });
         foreach (var f in Layout.Fences) Fit(f);

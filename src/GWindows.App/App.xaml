@@ -192,5 +192,32 @@
           </ControlTemplate>
         </Setter.Value>
       </Setter>
+    </Style>
+    <!-- Text input (fence title rename, prompts): rounded dark field, accent border while focused (fast token, 140 ms). -->
+    <Style x:Key="FenceTextBox" TargetType="TextBox">
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="CaretBrush" Value="White" />
+      <Setter Property="SelectionBrush" Value="#667AA7FF" />
+      <Setter Property="FontFamily" Value="Segoe UI Variable" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="TextBox">
+            <Border x:Name="bd" CornerRadius="7" Padding="8,4" Background="#26FFFFFF" BorderThickness="1" BorderBrush="#44FFFFFF" SnapsToDevicePixels="True">
+              <ScrollViewer x:Name="PART_ContentHost" Focusable="False" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsKeyboardFocused" Value="True">
+                <Trigger.EnterActions>
+                  <BeginStoryboard><Storyboard><ColorAnimation Storyboard.TargetName="bd" Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" To="#CC7AA7FF" Duration="0:0:0.14" /></Storyboard></BeginStoryboard>
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                  <BeginStoryboard><Storyboard><ColorAnimation Storyboard.TargetName="bd" Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" To="#44FFFFFF" Duration="0:0:0.14" /></Storyboard></BeginStoryboard>
+                </Trigger.ExitActions>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
     </Style>  </Application.Resources>
 </Application>

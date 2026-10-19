@@ -163,10 +163,10 @@ public sealed class FenceWindow : Window
 
     void Rename()
     {
-        var box = new TextBox { Text = _d.Name, Margin = new(8, 4, 8, 4) };
+        var box = new TextBox { Text = _d.Name, Margin = new(8, 4, 8, 4), Style = (Style)Application.Current.FindResource("FenceTextBox") };
         void Done() { _d.Name = box.Text; _title.Text = _d.Name; _titleBar.Child = _title; App.SaveSoon(); }
         box.LostFocus += (_, _) => Done();
-        box.KeyDown += (_, e) => { if (e.Key == Key.Enter) Done(); };
+        box.KeyDown += (_, e) => { if (e.Key == Key.Escape) box.Text = _d.Name; if (e.Key is Key.Enter or Key.Escape) Done(); };
         _titleBar.Child = box; Activate(); box.Focus(); box.SelectAll();
     }
 
