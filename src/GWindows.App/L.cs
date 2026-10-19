@@ -31,6 +31,11 @@ static class L
         ["O G-Windows já está em execução. Procure o ícone na bandeja do Windows."] = "G-Windows is already running. Look for its icon in the Windows tray.",
         ["Este layout contém {0} caminho(s) de rede (\\\\servidor\\...). Ao carregar, o Windows se conecta a esses servidores. Continuar?"] = "This layout contains {0} network path(s) (\\\\server\\...). When it loads, Windows connects to those servers. Continue?",
         // palette
+        ["Comando"] = "Command",
+        ["Alternar cercas"] = "Toggle fences",
+        ["Perfil: "] = "Profile: ",
+        ["Buscar itens e comandos..."] = "Search items and commands...",
+        ["↑↓ navegar   ·   Enter abrir   ·   Esc fechar"] = "↑↓ navigate   ·   Enter open   ·   Esc close",
         ["> Nova cerca"] = "> New fence",
         ["> Alternar cercas"] = "> Toggle fences",
         ["> Perfil: "] = "> Profile: ",

@@ -197,8 +197,9 @@ public partial class App : Application
     static void ShowPalette()
     {
         var items = Layout.Fences.SelectMany(f => f.Items).Concat(DesktopItems()).Distinct().Select(Palette.Item);
-        var cmds = new (string, Action)[] { (L.T("> Nova cerca"), NewFence), (L.T("> Alternar cercas"), () => _show!.Checked = !_show.Checked) }
-            .Concat(Layout.Profiles.Keys.Append(Layout.Profile).Distinct().Select(n => (L.T("> Perfil: ") + n, (Action)(() => SwitchProfile(n)))));
+        var cmd = L.T("Comando");
+        var cmds = new[] { new Entry(L.T("Nova cerca"), cmd, null, NewFence), new Entry(L.T("Alternar cercas"), cmd, null, () => _show!.Checked = !_show.Checked) }
+            .Concat(Layout.Profiles.Keys.Append(Layout.Profile).Distinct().Select(n => new Entry(L.T("Perfil: ") + n, cmd, null, () => SwitchProfile(n))));
         Palette.Show(cmds.Concat(items));
     }
 

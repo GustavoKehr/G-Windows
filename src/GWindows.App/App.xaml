@@ -142,5 +142,55 @@
           </ControlTemplate>
         </Setter.Value>
       </Setter>
+    </Style>
+    <!-- Command palette rows: same hover animation as the context menu (100 ms in, 160 ms out), selection a touch brighter. -->
+    <Style x:Key="PaletteItem" TargetType="ListBoxItem">
+      <Setter Property="Focusable" Value="False" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ListBoxItem">
+            <Border x:Name="bg" CornerRadius="8" Padding="10,7" Margin="0,1" Background="#00FFFFFF" SnapsToDevicePixels="True">
+              <ContentPresenter />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="bg" Property="Background" Value="#33FFFFFF" />
+              </Trigger>
+              <MultiTrigger>
+                <MultiTrigger.Conditions>
+                  <Condition Property="IsMouseOver" Value="True" />
+                  <Condition Property="IsSelected" Value="False" />
+                </MultiTrigger.Conditions>
+                <MultiTrigger.EnterActions>
+                  <BeginStoryboard><Storyboard><ColorAnimation Storyboard.TargetName="bg" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#1FFFFFFF" Duration="0:0:0.1" /></Storyboard></BeginStoryboard>
+                </MultiTrigger.EnterActions>
+                <MultiTrigger.ExitActions>
+                  <BeginStoryboard><Storyboard><ColorAnimation Storyboard.TargetName="bg" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#00FFFFFF" Duration="0:0:0.16" /></Storyboard></BeginStoryboard>
+                </MultiTrigger.ExitActions>
+              </MultiTrigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="PaletteList" TargetType="ListBox">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Focusable" Value="False" />
+      <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+      <Setter Property="ItemContainerStyle" Value="{StaticResource PaletteItem}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ListBox">
+            <ScrollViewer Focusable="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0">
+              <ScrollViewer.Resources>
+                <Style TargetType="ScrollBar" BasedOn="{StaticResource FenceScrollBar}" />
+              </ScrollViewer.Resources>
+              <ItemsPresenter />
+            </ScrollViewer>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
     </Style>  </Application.Resources>
 </Application>

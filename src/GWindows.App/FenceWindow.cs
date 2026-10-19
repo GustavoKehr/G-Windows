@@ -391,7 +391,7 @@ public sealed class FenceWindow : Window
         return path;
     }
 
-    static ImageSource? IconOf(string path)
+    internal static ImageSource? IconOf(string path)
     {
         try
         {
