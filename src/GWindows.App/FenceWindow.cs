@@ -188,7 +188,7 @@ public sealed class FenceWindow : Window
         if (path != null)
         {
             Add(L.T("Abrir"), () => Launch(path));
-            Add(L.T("Mostrar no Explorer"), () => Process.Start(new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), $"/select,\"{path.Replace("\"", "")}\"")));
+            Add(L.T("Mostrar no Explorer"), () => ShowInExplorer(path));
             Add(L.T("Propriedades"), () => Native.Properties(path));
             Add(L.T("Mais opções do Windows..."), () => { Native.GetCursorPos(out var p); ShellMenu.Show(_hwnd, path, p.X, p.Y, ""); });
             Add(L.T("Remover da cerca"), () =>
@@ -261,6 +261,22 @@ public sealed class FenceWindow : Window
         var title = smart switch { "recent" => L.T("Arquivos Recentes"), "large" => L.T("Maiores Arquivos"), "stale" => L.T("Não Tocados (90 dias)"), "folders" => L.T("Pastas Mais Acessadas"), _ => kind switch { "clock" => L.T("Relógio"), "notes" => L.T("Notas"), _ => portal.Length > 0 ? (Path.GetFileName(portal.TrimEnd('\\', '/')) is { Length: > 0 } n ? n : portal) : null } };
         if (title != null) { _d.Name = title; _title.Text = title; }
         Rebuild(); App.SaveSoon();
+    }
+
+    /// <summary>Opens Explorer at the item's real location (the install folder or target of a shortcut), selecting the file when there is one.</summary>
+    static void ShowInExplorer(string path)
+    {
+        var t = Locator.Resolve(path);
+        var explorer = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
+        try
+        {
+            var psi = new ProcessStartInfo(explorer);
+            if (t.Select is not null) psi.Arguments = $"/select,\"{t.Select.Replace("\"", "")}\"";   // one pre-quoted string: Explorer does not parse /select,"x" split into two arguments
+            else if (t.Open is not null) psi.Arguments = t.Open.StartsWith("shell:", StringComparison.OrdinalIgnoreCase) ? t.Open : $"\"{t.Open.Replace("\"", "")}\"";
+            else return;
+            Process.Start(psi);
+        }
+        catch (Exception) { }
     }
 
     static void Launch(string p) { try { Process.Start(new ProcessStartInfo(p) { UseShellExecute = true }); } catch (Exception) { } }
