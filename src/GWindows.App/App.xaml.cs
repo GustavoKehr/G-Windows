@@ -14,16 +14,37 @@ public partial class App : Application
     static System.Windows.Forms.NotifyIcon? _tray;
     const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
 
+    const string TaskName = "G-Windows (start at logon)";
+
+    /// <summary>Start with Windows through a per-user logon task (10 s delay), not the Run registry key: Explorer silently skipped our Run entry at boot.
+    /// No administrator rights needed. A legacy Run value from older versions is removed.</summary>
     static bool AutoStart
     {
-        get { using var k = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(RunKey); return k?.GetValue("G-Windows") != null; }
+        get => RunPowerShell($"if (Get-ScheduledTask -TaskName '{TaskName}' -ErrorAction SilentlyContinue) {{ exit 0 }} else {{ exit 1 }}") == 0;
         set
         {
-            using var k = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(RunKey, true)!;
-            if (value) k.SetValue("G-Windows", $"\"{Environment.ProcessPath}\" --startup"); else k.DeleteValue("G-Windows", false);
+            try { using var k = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(RunKey, true); k?.DeleteValue("G-Windows", false); } catch (Exception) { }
+            var exe = Environment.ProcessPath!.Replace("'", "''");
+            RunPowerShell(value
+                ? $"$a = New-ScheduledTaskAction -Execute '{exe}' -Argument '--startup'; " +
+                  "$t = New-ScheduledTaskTrigger -AtLogOn -User \"$env:USERDOMAIN\\$env:USERNAME\"; $t.Delay = 'PT10S'; " +
+                  "$s = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero) -StartWhenAvailable; " +
+                  $"Register-ScheduledTask -TaskName '{TaskName}' -Action $a -Trigger $t -Settings $s -RunLevel Limited -Force | Out-Null"
+                : $"Unregister-ScheduledTask -TaskName '{TaskName}' -Confirm:$false -ErrorAction SilentlyContinue");
         }
     }
 
+    static int RunPowerShell(string script)
+    {
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo("powershell.exe") { CreateNoWindow = true, UseShellExecute = false, WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden };
+            psi.ArgumentList.Add("-NoProfile"); psi.ArgumentList.Add("-NonInteractive"); psi.ArgumentList.Add("-Command"); psi.ArgumentList.Add(script);
+            using var p = System.Diagnostics.Process.Start(psi)!;
+            return p.WaitForExit(15000) ? p.ExitCode : -1;
+        }
+        catch (Exception) { return -1; }
+    }
     static System.Windows.Forms.ToolStripMenuItem? _show;
     static readonly List<TogglePill> _pills = [];
     static Mutex? _single;
