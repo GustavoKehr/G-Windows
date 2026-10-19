@@ -63,7 +63,7 @@ public class CoreTests
     [Fact]
     public void Grid_adapts_to_screen_width_and_stacks()
     {
-        Assert.Equal(7, FenceGrid.Columns(3440)); Assert.Equal(3, FenceGrid.Columns(1920)); Assert.Equal(1, FenceGrid.Columns(700));
+        Assert.Equal(7, FenceGrid.Columns(3440)); Assert.Equal(4, FenceGrid.Columns(1920)); Assert.Equal(1, FenceGrid.Columns(700));
         Assert.Equal(6, FenceGrid.NearestColumn(3440, 3440, 3440 - 40 - 225)); // right-most slot
         var l = FenceGrid.Layout(0, 0, 1920, 1080, [(0, 300), (0, 300), (2, 100)]);
         Assert.Equal(l[0].x, l[1].x); Assert.True(l[1].y > l[0].y);   // same column stacks downward
@@ -112,5 +112,19 @@ public class CoreTests
 
         using var fs2 = new FileStream(p, FileMode.Open, FileAccess.Read, FileShare.None);
         Assert.Empty(LayoutStore.Load(p, 2, 50).Fences); Assert.True(LayoutStore.LastLoadFailed);   // still locked: reported, not silently replaced
+    }
+
+    [Fact]
+    public void Grid_fills_the_width_and_scales_with_dpi()
+    {
+        // laptop 1920 px wide: the 4th column used to be left empty (needs 1940 px at 450 each); now 4 slightly narrower columns fill it
+        Assert.Equal(4, FenceGrid.Columns(1920));
+        var l = FenceGrid.Layout(0, 0, 1920, 1080, [(0, 100), (1, 100), (2, 100), (3, 100)]);
+        Assert.Equal(40, l[0].x);
+        Assert.Equal(1920 - 40, l[3].x + l[3].w + 0);   // last column ends exactly at the right margin
+        // same screen at 150 % scale: margins/gap/width scale, so fewer columns and wider pixels
+        Assert.Equal(3, FenceGrid.Columns(1920, 1.5));
+        Assert.True(FenceGrid.ColumnWidth(1920, 1.5) > FenceGrid.ColumnWidth(1920));
+        Assert.Equal(60, FenceGrid.Layout(0, 0, 1920, 1080, [(0, 100)], 1.5)[0].y);
     }
 }

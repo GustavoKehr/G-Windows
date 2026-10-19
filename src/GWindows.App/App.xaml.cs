@@ -111,6 +111,13 @@ public partial class App : Application
         if (!first) { MessageBox.Show(L.T("O G-Windows já está em execução. Procure o ícone na bandeja do Windows."), "G-Windows", MessageBoxButton.OK, MessageBoxImage.Information); Shutdown(); return; }
         if (e.Args.Contains("--startup")) System.Threading.Thread.Sleep(4000);   // at logon, let the shell and disk settle first
         Layout = LayoutStore.Load(LayoutPath, 30, 500);   // waits up to ~15 s for a locked file
+        try
+        {
+            var log = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "G-Windows", "startup.log");
+            Directory.CreateDirectory(Path.GetDirectoryName(log)!);
+            File.AppendAllText(log, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} args=[{string.Join(" ", e.Args)}] path={LayoutPath} exists={File.Exists(LayoutPath)} len={(File.Exists(LayoutPath) ? new FileInfo(LayoutPath).Length : -1)} fences={Layout.Fences.Count} failed={LayoutStore.LastLoadFailed} user={Environment.UserName}\n");
+        }
+        catch (Exception) { }
         if (LayoutStore.LastLoadFailed)
         {
             // Never overwrite a layout we could not read: run with defaults, but do not save in this session.
@@ -311,13 +318,15 @@ public partial class App : Application
         {
             var s = System.Windows.Forms.Screen.AllScreens.First(x => x.DeviceName == g.Key); var a = s.WorkingArea;
             var list = g.OrderBy(w => Layout.Fences.IndexOf(w.Data)).ToList();   // stacking order = list order
-            foreach (var w in list) w.FitHeight();
+            var scale = Native.ScaleOf(s.Bounds);
+            var colW = FenceGrid.ColumnWidth(a.Width, scale);
+            foreach (var w in list) w.FitHeight(colW, scale);
             foreach (var w in list)
             {
                 w.Data.Monitor = s.DeviceName;
-                if (w.Data.Col < 0) w.Data.Col = FenceGrid.NearestColumn(a.Right, a.Width, w.Data.X + w.Data.W / 2);
+                if (w.Data.Col < 0) w.Data.Col = FenceGrid.NearestColumn(a.Right, a.Width, w.Data.X + w.Data.W / 2, scale);
             }
-            var slots = FenceGrid.Layout(a.Left, a.Top, a.Right, a.Bottom, list.Select(w => (w.Data.Col, w.Data.H)).ToList());
+            var slots = FenceGrid.Layout(a.Left, a.Top, a.Right, a.Bottom, list.Select(w => (w.Data.Col, w.Data.H)).ToList(), scale);
             for (var i = 0; i < list.Count; i++) { list[i].Data.Col = slots[i].col; list[i].MoveTo(slots[i].x, slots[i].y, slots[i].w, animate); }
         }
     }
@@ -329,7 +338,7 @@ public partial class App : Application
         if (moved && !d.Free)
         {
             var s = System.Windows.Forms.Screen.FromPoint(new System.Drawing.Point(d.X + d.W / 2, d.Y + d.H / 2)); var a = s.WorkingArea;
-            d.Monitor = s.DeviceName; d.Col = FenceGrid.NearestColumn(a.Right, a.Width, d.X + d.W / 2);
+            d.Monitor = s.DeviceName; d.Col = FenceGrid.NearestColumn(a.Right, a.Width, d.X + d.W / 2, Native.ScaleOf(s.Bounds));
             // list order = stacking order inside a column: go before the first fence in that column that sits lower than the drop point
             Layout.Fences.Remove(d);
             var before = Layout.Fences.FirstOrDefault(f => !f.Free && f.Monitor == d.Monitor && f.Col == d.Col && f.Y + f.H / 2 > d.Y + d.H / 2);

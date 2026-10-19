@@ -59,14 +59,16 @@ public sealed class FenceWindow : Window
     int _px, _py;            // where the window is drawn right now (differs from _d.X/_d.Y while sliding to a slot)
     Spring? _sx, _sy;
 
-    /// <summary>Snapped fences size their height to the content: 5 items per row (84 px each), 1 to 5 rows, scrolling beyond that.</summary>
-    public void FitHeight()
+    /// <summary>Snapped fences size their height to the content: as many 84-DIP icons per row as the column width (in DIPs) allows,
+    /// 1 to 5 rows, scrolling beyond that. widthPx/scale are physical pixels and the monitor's DPI factor.</summary>
+    public void FitHeight(int widthPx, double scale)
     {
         if (_d.Free || _d.Kind.Length > 0) return;
         var n = ItemsOf().Count();
-        _d.H = Math.Clamp((int)Math.Ceiling(n / 5.0), n == 0 && Manual ? 2 : 1, 5) * 84 + 58;
+        var perRow = Math.Max(1, (int)((widthPx / scale - 14) / 84));
+        var rows = Math.Clamp((int)Math.Ceiling(n / (double)perRow), n == 0 && Manual ? 2 : 1, 5);
+        _d.H = (int)Math.Round((rows * 84 + 58) * scale);
     }
-
     /// <summary>Rebuild menus and texts after a language switch.</summary>
     public void Relocalize() { ContextMenu = Menu(null); Rebuild(); }
 

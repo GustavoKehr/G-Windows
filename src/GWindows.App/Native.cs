@@ -190,4 +190,18 @@ static class Native
         if (SHGetKnownFolderPath(ref id, 0, 0, out var p) != 0) return null;
         try { return Marshal.PtrToStringUni(p); } finally { CoTaskMemFree(p); }
     }
+
+    [DllImport("user32")] static extern IntPtr MonitorFromPoint(POINT p, uint flags);
+    [DllImport("shcore")] static extern int GetDpiForMonitor(IntPtr mon, int type, out uint x, out uint y);
+
+    /// <summary>DPI scale factor (1.0 = 96 dpi) of the monitor that contains the middle of <paramref name="bounds"/>.</summary>
+    public static double ScaleOf(System.Drawing.Rectangle bounds)
+    {
+        try
+        {
+            var mon = MonitorFromPoint(new POINT { X = bounds.X + bounds.Width / 2, Y = bounds.Y + bounds.Height / 2 }, 2 /*MONITOR_DEFAULTTONEAREST*/);
+            return GetDpiForMonitor(mon, 0 /*MDT_EFFECTIVE_DPI*/, out var dx, out _) == 0 && dx > 0 ? dx / 96.0 : 1.0;
+        }
+        catch (Exception) { return 1.0; }
+    }
 }
