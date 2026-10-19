@@ -51,8 +51,7 @@ A source-level security audit was done; see `docs/security-audit/relatorio-audit
 
 ## Code signing
 
-Release binaries are currently unsigned; see the [code signing policy](CODE_SIGNING_POLICY.md) for the SignPath Foundation application status.
-
+Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/) — **application in progress**. Until it is approved, release binaries are unsigned and Windows SmartScreen may show a warning. See the [code signing policy](CODE_SIGNING_POLICY.md) (roles, what is signed, privacy).
 ## Disclaimer
 
 G-Windows is an independent open-source project and is not affiliated with, endorsed by or sponsored by Microsoft. "Windows" is a trademark of Microsoft Corporation.
