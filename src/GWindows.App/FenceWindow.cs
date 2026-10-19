@@ -26,7 +26,8 @@ public sealed class FenceWindow : Window
     };
     readonly Border _titleBar = new() { Background = Brushes.Transparent, Cursor = Cursors.SizeAll };
     readonly TextBlock _title = new() { Foreground = Brushes.White, FontFamily = new("Segoe UI Variable"), FontSize = 13, Margin = new(12, 8, 12, 8) };
-    readonly WrapPanel _panel = new() { Margin = new(4) };
+    readonly StackPanel _panel = new() { Margin = new(0, 4, 0, 4) };   // vertical stack of centred rows of 84-DIP tiles
+    readonly List<UIElement> _tiles = [];
     readonly ScrollViewer _scroll = new() { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
     System.Windows.Threading.DispatcherTimer? _clock;
     FileSystemWatcher? _portalWatch;
@@ -119,6 +120,7 @@ public sealed class FenceWindow : Window
         var root = new Grid(); root.Children.Add(_frame); root.Children.Add(grip);
         Content = root;
         AllowDrop = true;
+        _scroll.SizeChanged += (_, _) => Relayout();
 
         _rollTimer.Tick += (_, _) => { _rollTimer.Stop(); Apply(); };
         MouseEnter += (_, _) => { _rollTimer.Stop(); _hover = true; Apply(); _anim.To(_opacity, 1); };
@@ -308,11 +310,26 @@ public sealed class FenceWindow : Window
         return _d.Items.Where(p => File.Exists(p) || Directory.Exists(p));
     }
 
+    /// <summary>Lay the tiles out in rows of as many 84-DIP tiles as fit, each row centred, so partial last rows are centred too.</summary>
+    void Relayout()
+    {
+        if (_tiles.Count == 0) return;
+        foreach (var r in _panel.Children.OfType<StackPanel>()) r.Children.Clear();   // detach the tiles from their old rows
+        _panel.Children.Clear();
+        var perRow = Math.Max(1, (int)((_scroll.ActualWidth - 12) / 84));
+        for (var i = 0; i < _tiles.Count; i += perRow)
+        {
+            var row = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center };
+            foreach (var tile in _tiles.Skip(i).Take(perRow)) row.Children.Add(tile);
+            _panel.Children.Add(row);
+        }
+    }
+
     void Rebuild()
     {
         _clock?.Stop(); _clock = null; _portalWatch?.Dispose(); _portalWatch = null;
         _scroll.Content = _panel;
-        _panel.Children.Clear();
+        _tiles.Clear(); _panel.Children.Clear();
         if (_d.Kind == "clock")
         {
             var tb = new TextBlock { Foreground = Brushes.White, FontSize = 36, FontFamily = new("Segoe UI Variable"), Margin = new(16), HorizontalAlignment = HorizontalAlignment.Center };
@@ -329,8 +346,8 @@ public sealed class FenceWindow : Window
         }
         else
         {
-            foreach (var path in ItemsOf()) _panel.Children.Add(MakeItem(path));
-            if (_panel.Children.Count == 0 && Manual)
+            foreach (var path in ItemsOf()) _tiles.Add(MakeItem(path));
+            if (_tiles.Count == 0 && Manual)
                 _panel.Children.Add(new TextBlock { Text = L.T("Arraste pastas ou arquivos para cá,\nou cole o caminho (Ctrl+V)."), Foreground = new SolidColorBrush(Color.FromArgb(0x99, 255, 255, 255)), FontSize = 12, Margin = new(8, 12, 8, 0), TextWrapping = TextWrapping.Wrap });
             if (_d.Portal.Length > 0 && Directory.Exists(_d.Portal))
             {
@@ -339,6 +356,7 @@ public sealed class FenceWindow : Window
                 _portalWatch.Created += R; _portalWatch.Deleted += R; _portalWatch.Renamed += R;
             }
         }
+        Relayout();
         if (_hwnd != 0) App.Arrange(true);   // item count changed: heights and stacking follow
     }
 
