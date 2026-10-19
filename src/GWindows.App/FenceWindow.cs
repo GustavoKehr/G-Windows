@@ -161,15 +161,26 @@ public sealed class FenceWindow : Window
         el.MouseLeftButtonUp += (_, _) => { if (el.IsMouseCaptured) { el.ReleaseMouseCapture(); App.AfterDrag(this, isMove); } };
     }
 
+    /// <summary>Inline title editor. It commits what was typed when focus is lost for any reason: clicking elsewhere in the fence,
+    /// on the desktop or in another app (the window deactivates), Enter, or Esc (which restores the old name instead).</summary>
     void Rename()
     {
         var box = new TextBox { Text = _d.Name, Margin = new(8, 4, 8, 4), Style = (Style)Application.Current.FindResource("FenceTextBox") };
-        void Done() { _d.Name = box.Text; _title.Text = _d.Name; _titleBar.Child = _title; App.SaveSoon(); }
+        var finished = false;
+        void Done()
+        {
+            if (finished) return;
+            finished = true;
+            PreviewMouseDown -= OutsideClick; Deactivated -= OnDeactivated;
+            _d.Name = box.Text; _title.Text = _d.Name; _titleBar.Child = _title; App.SaveSoon();
+        }
+        void OutsideClick(object s, MouseButtonEventArgs e) { if (!box.IsMouseOver) Done(); }   // a click anywhere else in this fence
+        void OnDeactivated(object? s, EventArgs e) => Done();                                    // a click on the desktop or another window
         box.LostFocus += (_, _) => Done();
         box.KeyDown += (_, e) => { if (e.Key == Key.Escape) box.Text = _d.Name; if (e.Key is Key.Enter or Key.Escape) Done(); };
+        PreviewMouseDown += OutsideClick; Deactivated += OnDeactivated;
         _titleBar.Child = box; Activate(); box.Focus(); box.SelectAll();
     }
-
     ContextMenu Menu(string? path)
     {
         var m = new ContextMenu();
